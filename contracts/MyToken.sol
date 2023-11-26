@@ -2,15 +2,10 @@
 pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./IExerciceSolution.sol";
 
-contract MyToken is
-    Ownable,
-    IExerciceSolution,
-    ERC721Enumerable,
-{
+contract MyToken is Ownable, ERC721Enumerable {
     uint256 private _nextTokenId;
     mapping(uint256 => uint) private _animalSex;
     mapping(uint256 => uint) private _animalLegs;
@@ -84,18 +79,34 @@ contract MyToken is
         _animalName[animalNumber] = "";
     }
 
+    mapping(uint256 => uint256) public _animalPrice;
+
     // Selling functions
-    function isAnimalForSale(
-        uint animalNumber
-    ) public view virtual returns (bool) {}
+    function isAnimalForSale(uint animalNumber) public view returns (bool) {
+        return _animalPrice[animalNumber] > 0;
+    }
 
-    function animalPrice(
-        uint animalNumber
-    ) public view virtual returns (uint256) {}
+    function animalPrice(uint animalNumber) public view returns (uint256) {
+        return _animalPrice[animalNumber];
+    }
 
-    function buyAnimal(uint animalNumber) public payable virtual {}
+    function buyAnimal(uint animalNumber) public {
+        require(isAnimalForSale(animalNumber), "Animal is not for sale");
+        address _owner = ownerOf(animalNumber);
+        _transfer(_owner, msg.sender, animalNumber);
+    }
 
-    function offerForSale(uint animalNumber, uint price) public virtual {}
+    function offerForSale(uint animalNumber, uint price) public {
+        approve(address(this), animalNumber);
+        _animalPrice[animalNumber] = price;
+    }
+
+    function tokenOfOwnerByIndex(
+        address owner,
+        uint256 index
+    ) public view override(ERC721Enumerable) returns (uint256) {
+        return super.tokenOfOwnerByIndex(owner, index);
+    }
 
     // Reproduction functions
 
